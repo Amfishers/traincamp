@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>lodash array</title>
+</head>
+<body>
+
+  <script src="./lodash.js"></script>
+  <script>
+    
+    // _.chunk(array, [size=1])
+    // 将数组（array）拆分成多个 size 长度的区块，并将这些区块组成一个新数组。 如果array 无法被分割成全部等长的区块，那么最后剩余的元素将组成一个区块。
+    
+    const demoArr1 = [ 1, 2,'a', 'b', 'z']
+    console.log('chunk', _.chunk(demoArr1, 2))  // [[1,2], ['a', 'b'], ['z']]
+
+    // _.compact(array)
+    // 创建一个新数组，包含原数组中所有的非假值元素。例如false, null,0, "", undefined, 和 NaN 都是被认为是“假值”。
+    const demoArr2 = [0, 1, '', '3', null, undefined]
+    console.log('compact', _.compact(demoArr2)) // [1, '3']
+
+  </script>
+</body>
+</html>
