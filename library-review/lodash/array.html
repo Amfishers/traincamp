@@ -81,6 +81,47 @@
     }))  // 结果： [{ 'x': 2, 'y': 1 }]
 
 
+    // _.drop(array, [n=1])
+    // 作用：创建一个切片数组，去除array前面的n个元素。（n默认值为1。）
+    // 想法：array (Array): 要查询的数组。 [n=1] (number): 要去除的元素个数。
+    // 注意： n 默认为 1, 负数则不删除
+    console.log('drop', _.drop([1, 2, 3]))  // [2, 3]
+    console.log('drop2', _.drop([1, 2, 3], 2))  // [3]
+    console.log('drop3', _.drop([1, 2, 3], 0))  // [1,2,3]
+    console.log('drop4', _.drop([1, 2, 3], 5))  // []
+    console.log('drop5', _.drop([1, 2, 3], -1))  // [1,2,3]
+
+    // _.dropRight(array, [n=1])
+    // 作用：创建一个切片数组，去除array尾部的n个元素。（n默认值为1。）
+    // 想法：跟drop一样，只是从右边开始裁切
+    console.log('dropRight', _.dropRight([1,2,3], 2))  // [1]
+    
+
+    // _.dropRightWhile(array, [predicate=_.identity])
+    // 作用：创建一个切片数组，去除array中从 predicate 返回假值开始到尾部的部分。predicate 会传入3个参数： (value, index, array)。
+    // 想法：array (Array): 要查询的数组。 [predicate=_.identity] (Function): 这个函数会在每一次迭代调用。
+    var demoArr_dropRightWhile = [
+      { 'user': '1111', show: true },
+      { 'user': '222', show: false },
+      { 'user': '333', show: true },
+    ]
+    console.log('dropRightWhile', _.dropRightWhile(demoArr_dropRightWhile, (e) => e.show))  // [{ 'user': '1111', show: true }, { 'user': '222', show: false }]
+    console.log('dropRightWhile2', _.dropRightWhile(demoArr_dropRightWhile, 'show'))  // [{ 'user': '1111', show: true }, { 'user': '222', show: false }]
+
+
+    // _.dropWhile(array, [predicate=_.identity])
+    // 作用：创建一个切片数组，去除array中从起点开始到 predicate 返回假值结束部分。predicate 会传入3个参数： (value, index, array)。
+    // 想法：array (Array): 要查询的数组。 [predicate=_.identity] (Function): 这个函数会在每一次迭代调用。
+    var demoArr_dropWhile = [
+      { 'user': '1111', show: true },
+      { 'user': '222', show: false },
+      { 'user': '333', show: true },
+    ]
+    console.log('dropWhile', _.dropWhile(demoArr_dropWhile, (e) => e.show))  // [{ 'user': '222', show: false }, { 'user': '333', show: true }]
+    console.log('dropWhile2', _.dropWhile(demoArr_dropWhile, 'show'))  // [{ 'user': '222', show: false }, { 'user': '333', show: true }]
+
+    
+
   </script>
 </body>
 </html>
