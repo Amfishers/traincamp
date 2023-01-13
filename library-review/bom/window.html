@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>window</title>
+</head>
+<body>
+  <p>我是 window</p>
+  <button id="z">dianji</button>
+
+  <script>
+    console.log('window', window, top)
+    console.log('window', window === top)
+    console.log('window', window.screenLeft, window.screenX, window.screenTop, window.screenY);
+
+    document.getElementById('z').onclick = function() {
+
+      window.moveTo(100, 200)
+    }
+
+  </script>
+</body>
+</html>
