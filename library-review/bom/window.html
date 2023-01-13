@@ -9,6 +9,7 @@
 <body>
   <p>我是 window</p>
   <button id="z">dianji</button>
+  <iframe src="./child.html" name="childFramezzz"></iframe>
 
   <script>
     console.log('window', window, top)
@@ -17,7 +18,8 @@
 
     document.getElementById('z').onclick = function() {
 
-      window.moveTo(100, 200)
+      const s = window.open('http://www.baidu.com', 'childFrame', 'width: 400px;', false)
+      console.log('sss', s)
     }
 
   </script>
