@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>indexDB</title>
+</head>
+<body>
+<button id="BtnAdd">新增数据</button>
+<button id="BtnDelete">删除数据</button>
+<button id="BtnRead">查找数据</button>
+<button id="BtnPut">修改数据</button>
+<button id="BtnGetAllCursor">获取所有cursor</button>
+<button id="BtnGetRangeCursor">获取范围cursor</button>
+
+
+<script>
+const DB_NAME = 'Fisher'
+const DB_VERSION = 1
+const OB_NAMES = {
+  UseKeyPath: 'fisherUseKeyPath',
+  UseKeyGenerator: 'fisherUseKeyGenerator'
+}
+// let db, request
+// /**
+//   * NOTE:
+//   * 1. 第一次打开可能会提示用户获取 indexDB 的权限
+//   * 2. 浏览器隐身模式不会存在本地，只会存储在内存中
+//   */
+// request = window.indexedDB.open(DB_NAME, DB_VERSION)
+// request.onerror = event => {
+//   console.log('====================--error--====================', event.target.error);
+// }
+// request.onsuccess = event => {
+//   db = event.target.result
+//   db.onversionchange = () => db.close();
+//   db.onerror = e => {
+//     console.log('====================--db error--====================', e.target.error);
+//   }
+//   db.onclose = e => {
+//     console.log('====================--db close--====================', e.target.error);
+//   }
+// }
+
+
+const TestData = [
+  {
+    uid: 1001,
+    name: 'MOCK1',
+    country: 'China',
+  },
+  {
+    uid: 1002,
+    name: 'MOCK2',
+    country: 'Aruba',
+  },
+  {
+    uid: 1003,
+    name: 'MOCK3',
+    country: 'Spain',
+  },
+  {
+    uid: 1004,
+    name: 'MOCK4',
+    country: 'Argentina',
+  }
+]
+
+function openIndexDB () {
+  // The call to the open() function returns an IDBOpenDBRequest object with a result (success) or error value that you handle as an event.
+  return new Promise((resolve, reject) => {
+    /**
+     * NOTE:
+     * 1. 第一次打开可能会提示用户获取 indexDB 的权限
+     * 2. 浏览器隐身模式不会存在本地，只会存储在内存中
+     */
+    const request = window.indexedDB.open(DB_NAME, DB_VERSION)
+    request.onerror = function (event) {
+      // Do something with request.errorCode!
+      console.log('open request failed', event)
+      console.error(event.target.error)
+    }
+    request.onsuccess = function (event) {
+      // Do something with request.result!
+      // console.log('open request success', event)
+      var db = event.target.result
+      db.onerror = function (e) {
+        console.error('Database error: ', e.target.error)
+        reject(e.target.error)
+      }
+      db.onclose = e => {
+        console.error('Database close:', e.target.error)
+        reject(e.target.error)
+      }
+      resolve(db)
+    }
+    request.onupgradeneeded = function (event) {
+      /**
+       * NOTE:
+       * 1. 创建新的 objectStore
+       * 2. 删除旧的不需要的 objectStore
+       * 3. 如果需要更新已有 objectStore 的结构，需要先删除原有的 objectStore ，然后重新创建
+       */
+      // The IDBDatabase interface
+      console.log('onupgradeneeded', event)
+      var db = event.target.result
+      // Create an objectStore for this database
+      obUseKeypath(db)
+      obUseKeyGenerator(db)
+      /**
+       * NOTE:
+       * transaction
+       * 三个事件：
+       * 1. error
+       * 2. abort
+       * 3. complete
+       * 两个方法：
+       * 1. abort
+       * Rolls back all the changes to objects in the database associated with this transaction. If this transaction has been aborted or completed, then this method throws an error event.
+       * 2. objectStore
+       * Returns an IDBObjectStore object representing an object store that is part of the scope of this transaction.
+       */
+      db.transaction.oncomplete = function (e) {
+        console.log('obj create success', e)
+      }
+    }
+  })
+}
+function obUseKeypath (db) {
+  const objectStore = db.createObjectStore(OB_NAMES.UseKeyPath, {
+    keyPath: 'uid'
+  })
+  objectStore.createIndex('name', 'name', { unique: false })
+  objectStore.createIndex('country', 'country', { unique: false })
+}
+function obUseKeyGenerator (db) {
+  const objectStore = db.createObjectStore(OB_NAMES.UseKeyGenerator, {
+    autoIncrement: true
+  })
+  objectStore.createIndex('uid', 'uid', { unique: true })
+  objectStore.createIndex('name', 'name', { unique: false })
+  objectStore.createIndex('country', 'country', { unique: false })
+}
+
+
+
+/**
+* 添加数据
+* @param {array} docs 要添加数据
+* @param {string} objName 仓库名称
+*/
+function addData (docs, objName) {
+  if (!(docs && docs.length)) {
+    throw new Error('docs must be a array!')
+  }
+  return openIndexDB().then(db => {
+    const tx = db.transaction([objName], 'readwrite')
+    tx.oncomplete = e => {
+      console.log('tx:addData onsuccess', e)
+      return Promise.resolve(docs)
+    }
+    tx.onerror = e => {
+      e.stopPropagation()
+      console.error('tx:addData onerror', e.target.error)
+      return Promise.reject(e.target.error)
+    }
+    tx.onabort = e => {
+      console.warn('tx:addData abort', e.target)
+      return Promise.reject(e.target.error)
+    }
+    const obj = tx.objectStore(objName)
+    docs.forEach(doc => {
+      const req = obj.add(doc)
+      /**
+       * NOTE:
+       * request
+       * 两个事件：
+       * 1. success
+       * 2. error
+       */
+      // req.onsuccess = e => console.log('obj:addData onsuccess', e.target)
+      req.onerror = e => {
+        console.error('obj:addData onerror', e.target.error)
+      }
+    })
+  })
+}
+
+/**
+* 读取给定 key 的数据
+* @param {string} objName 仓库名称
+* @param {*} key 要读取数据的 primary key 值
+*/
+function readData (objName, key) {
+  return openIndexDB().then(db => {
+    const tx = db.transaction([objName])
+    const obj = tx.objectStore(objName)
+    const req = obj.get(key)
+    req.onsuccess = e => {
+      console.log(`readData success. key:${key},result:`, e.target.result)
+      return Promise.resolve(e.target.result)
+    }
+    req.onerror = e => {
+      console.error(`readData error. key:${key},error: ${e.target.errorCode}`)
+      return Promise.reject(e.target.error)
+    }
+  })
+}
+
+/**
+* 更新指定 key 的数据
+* @param {string} objName 仓库名称
+* @param {*} key 指定的 key
+* @param {object} changes 要修改的属性值
+*/
+function updateData (objName, key, changes) {
+  return openIndexDB().then(db => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction([objName], 'readwrite')
+      const obj = tx.objectStore(objName)
+      const req = obj.get(key)
+      req.onsuccess = e => {
+        let doc = e.target.result
+        let newDoc = Object.assign(doc, changes)
+        const req = obj.put(newDoc, key)
+        req.onsuccess = e => {
+          console.log(`updateData success, newDoc:`, newDoc, e)
+          resolve(e.target.result)
+        }
+        req.onerror = e => {
+          resolve(e.target.result)
+        }
+      }
+      req.onerror = e => {
+        reject(e.target.error)
+      }
+    })
+  })
+}
+
+
+/**
+* 删除指定 key 的数据
+* @param {string} objName 仓库名称
+* @param {*} key 要删除数据的 primary key 值
+*/
+function deleteData (objName, key) {
+  return openIndexDB().then(db => {
+    const tx = db.transaction([objName], 'readwrite')
+    const obj = tx.objectStore(objName)
+    const req = obj.delete(key)
+    req.onsuccess = e => {
+      console.log(`readData success. key:${key},result:`, e.target.result)
+      return Promise.resolve(e.target.result)
+    }
+    req.onerror = e => {
+      console.error(`readData error. key:${key},error: ${e.target.errorCode}`)
+      return Promise.reject(e.target.error)
+    }
+  })
+}
+
+
+/**
+* 通过 cursor 获取制定仓库下的所有数据
+* @param {string} objName 仓库名称
+* @param {function} [cb] 回调函数，对每次得到的 cursor 进行操作
+* @returns {Promise.<array.<object>} 包含所有数据的数组
+*/
+function getAllByCursor (objName, cb) {
+  return openIndexDB().then(db => {
+    const arr = []
+    const tx = db.transaction([objName])
+    const obj = tx.objectStore(objName)
+    return new Promise(resolve => {
+      obj.openCursor().onsuccess = e => {
+        const cursor = e.target.result
+        if (cursor) {  // 永远要检查
+          arr.push(cursor.value)
+          cb && cb(cursor)
+          cursor.continue()
+        } else {
+          return resolve(arr)
+        }
+      }
+    })
+  })
+}
+
+
+function getRangeByCursor (objName, cb) {
+  return openIndexDB().then(db => {
+    const arr = []
+    const tx = db.transaction([objName])
+    const obj = tx.objectStore(objName)
+    return new Promise(resolve => {
+      obj.openCursor(IDBKeyRange.lowerBound(2, 3)).onsuccess = e => {
+        const cursor = e.target.result
+        if (cursor) {  // 永远要检查
+          arr.push(cursor.value)
+          cb && cb(cursor)
+          cursor.continue()
+        } else {
+          return resolve(arr)
+        }
+      }
+    })
+  })
+}
+
+
+BtnAdd.onclick = () => {
+  addData(TestData, OB_NAMES.UseKeyGenerator)
+.then(() => addData(TestData, OB_NAMES.UseKeyPath))
+}
+
+BtnDelete.onclick = () => {
+  deleteData(OB_NAMES.UseKeyGenerator, 1).then().catch()
+}
+
+BtnRead.onclick = () => {
+  readData(OB_NAMES.UseKeyGenerator, 1).then(r => {
+    console.log('====================--r--====================', r);
+  })
+}
+
+BtnPut.onclick = () => {
+  updateData(OB_NAMES.UseKeyGenerator, 1, { country: 'ICeland' },)
+  .then(doc => console.log(doc))
+  .catch(console.error)
+}
+
+
+BtnGetAllCursor.onclick = () => {
+  getAllByCursor(OB_NAMES.UseKeyGenerator).then(console.log)
+}
+
+getRangeByCursor.onclick = () => {
+  getAllByCursor(OB_NAMES.UseKeyGenerator).then(console.log)
+}
+
+BtnGetRangeCursor.onclick = () => {
+  getRangeByCursor(OB_NAMES.UseKeyGenerator).then(console.log)
+}
+</script>
+  
+</body>
+</html>
