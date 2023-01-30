@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+
+
+  <script>
+    setTimeout(() => {
+      localStorage.setItem('aaa', 11)
+      localStorage.setItem('bbb', 11)
+    }, 1000)
+
+    setTimeout(() => {
+      localStorage.removeItem('aaa')
+    }, 5000)
+
+
+
+    window.addEventListener('storage', e => {
+      console.log('storage', e)
+    })
+  </script>
+  
+</body>
+</html>
